@@ -1,0 +1,29 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Guild {
+  id               String @id @unique
+  captchaChannelId String @unique
+  verifiedRoleId   String @unique
+
+  @@map("guilds")
+}
+
+model Member {
+  id           String   @id @unique
+  try          Int      @default(0)
+  guildId      String   @unique
+  timestampTry DateTime
+
+  @@unique([id, guildId])
+  @@map("members")
+}

@@ -1,0 +1,12 @@
+#folders
+node_modules
+.yarn
+dist
+
+
+#files
+.env
+prisma/dev.db
+*.lock
+*-lock.json
+.yarnrc.yml
