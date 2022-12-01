@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "fix": "npx eslint --fix src",
-    "build": "npx tsc --project tsconfig.json",
+    "build": "npx prisma migrate dev && npx tsc --project tsconfig.json",
     "start": "cd dist && node index.js"
   },
   "author": "",
