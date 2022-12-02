@@ -5,13 +5,14 @@
   "main": "dist/index.js",
   "scripts": {
     "fix": "npx eslint --fix src",
-    "build": "npx prisma migrate dev && npx tsc --project tsconfig.json",
+    "build": "npx tsc --project tsconfig.json",
     "start": "cd dist && node index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^4.7.0",
+    "captcha-canvas": "2.3.1",
     "discord.js": "^14.7.0",
     "dotenv": "^16.0.3"
   },

@@ -1,7 +1,7 @@
 import { ButtonInteraction, EmbedBuilder, Role } from 'discord.js';
 import { BotClient } from '../Client';
 import { constants } from './constants';
-import { randomBytes } from 'node:crypto';
+import { CaptchaGenerator } from 'captcha-canvas';
 import { prisma } from '../lib/prisma';
 
 export async function manageCaptcha(interaction: ButtonInteraction, client: BotClient) {
@@ -29,7 +29,7 @@ export async function manageCaptcha(interaction: ButtonInteraction, client: BotC
 
         if (memberInfoOnDatabase && memberInfoOnDatabase.try >= 3) {
             if (memberInfoOnDatabase.timestampTry >= new Date()) {
-                await interaction.reply({ content: constants.leftTimeoutVerification, ephemeral: true });
+                await interaction.reply({ content: constants.getLeftTimeoutVerification(memberInfoOnDatabase.timestampTry.getTime()), ephemeral: true });
                 return;
             }
 
@@ -52,21 +52,18 @@ export async function manageCaptcha(interaction: ButtonInteraction, client: BotC
             return;
         }
 
-        const captchaCode = randomBytes(6).toString('hex').toUpperCase();
+        const captcha = new CaptchaGenerator();
+        const captchaBufer = captcha.generateSync();
+        const captchaCode = captcha.text;
 
         const captchaSendedEmbed = new EmbedBuilder()
             .setAuthor({ name: client.user?.username as string, iconURL: client.user?.displayAvatarURL({ forceStatic: false }) })
             .setDescription(constants.captchaSended)
             .setColor('Green');
 
-        const resolveCaptchaEmbed = new EmbedBuilder()
-            .setAuthor({ name: client.user?.username as string, iconURL: client.user?.displayAvatarURL({ forceStatic: false }) })
-            .setDescription(constants.resolveCaptcha.replace('{code}', captchaCode))
-            .setColor('Green');
+        const resolveCaptchaImageSended = await interaction.user.send({ content: constants.resolveCaptcha, files: [captchaBufer] }).catch(() => null);
 
-        const resolveCaptchaEmbedSended = await interaction.user.send({ embeds: [resolveCaptchaEmbed] }).catch(() => null);
-
-        if (!resolveCaptchaEmbedSended) {
+        if (!resolveCaptchaImageSended) {
             await interaction.reply({ content: constants.closedDmError, ephemeral: true });
             return;
         }
@@ -87,7 +84,7 @@ export async function manageCaptcha(interaction: ButtonInteraction, client: BotC
                 }
             });
 
-            if (message.content !== captchaCode) {
+            if (message.content.toUpperCase() !== captchaCode) {
                 if (!memberInfoOnDatabase) {
                     await prisma.member.create({
                         data: {
