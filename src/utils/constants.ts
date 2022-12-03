@@ -17,7 +17,7 @@ export const constants = {
     verificationInfo: 'Clique no botão e resolva o Captcha enviado no privado para liberar a verificação.',
     guildAlreadyRegistred: 'Este servidor já possui um canal configurado para verificações.',
     captchaSended: 'Responda o Captcha que foi enviado na sua DM corretamente para se verificar.',
-    resolveCaptcha: 'Digite este código para ser liberado:',
+    resolveCaptcha: 'Digite este código para ser liberado: {code}',
     wrongCaptchaReceived: 'Você digitou o Código Captcha errado!\nVolte ao servidor para tentar novamente.',
     genericError: '❌ Um erro ocorreu durante a execução desta operação.',
     addRoleError: '❌ Um erro ocorreu, verifique a hierarquia de cargos e permissões.',

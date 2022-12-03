@@ -1,7 +1,7 @@
 import { ButtonInteraction, EmbedBuilder, Role } from 'discord.js';
 import { BotClient } from '../Client';
 import { constants } from './constants';
-import { CaptchaGenerator } from 'captcha-canvas';
+import { randomBytes } from 'node:crypto';
 import { prisma } from '../lib/prisma';
 
 export async function manageCaptcha(interaction: ButtonInteraction, client: BotClient) {
@@ -52,18 +52,21 @@ export async function manageCaptcha(interaction: ButtonInteraction, client: BotC
             return;
         }
 
-        const captcha = new CaptchaGenerator();
-        const captchaBufer = captcha.generateSync();
-        const captchaCode = captcha.text;
+        const captchaCode = randomBytes(6).toString('hex').toUpperCase();
 
         const captchaSendedEmbed = new EmbedBuilder()
             .setAuthor({ name: client.user?.username as string, iconURL: client.user?.displayAvatarURL({ forceStatic: false }) })
             .setDescription(constants.captchaSended)
             .setColor('Green');
 
-        const resolveCaptchaImageSended = await interaction.user.send({ content: constants.resolveCaptcha, files: [captchaBufer] }).catch(() => null);
+        const captchaResolveEmbed = new EmbedBuilder()
+            .setAuthor({ name: client.user?.username as string, iconURL: client.user?.displayAvatarURL({ forceStatic: false }) })
+            .setDescription(constants.resolveCaptcha.replace('{code}', captchaCode))
+            .setColor('Green');
 
-        if (!resolveCaptchaImageSended) {
+        const resolveCaptchaEmbedSended = await interaction.user.send({ embeds: [captchaResolveEmbed] }).catch(() => null);
+
+        if (!resolveCaptchaEmbedSended) {
             await interaction.reply({ content: constants.closedDmError, ephemeral: true });
             return;
         }
