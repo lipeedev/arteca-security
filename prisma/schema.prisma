@@ -28,9 +28,7 @@ model Guild {
 model Member {
   id           String   @id @unique
   try          Int      @default(0)
-  guildId      String   @unique
   timestampTry DateTime
 
-  @@unique([id, guildId])
   @@map("members")
 }

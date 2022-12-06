@@ -19,12 +19,7 @@ export async function manageCaptcha(interaction: ButtonInteraction, client: BotC
         }
 
         let memberInfoOnDatabase = await prisma.member.findUnique({
-            where: {
-                id_guildId: {
-                    guildId: interaction.guild?.id as string,
-                    id: interaction.user.id
-                }
-            }
+            where: { id: interaction.user.id }
         });
 
         if (memberInfoOnDatabase && memberInfoOnDatabase.try >= 3) {
@@ -34,12 +29,7 @@ export async function manageCaptcha(interaction: ButtonInteraction, client: BotC
             }
 
             await prisma.member.update({
-                where: {
-                    id_guildId: {
-                        guildId: interaction.guild?.id as string,
-                        id: interaction.user.id
-                    }
-                },
+                where: { id: interaction.user.id },
                 data: { try: 1, timestampTry: getVerificationTimeoutCount() }
             });
         }
@@ -87,18 +77,12 @@ export async function manageCaptcha(interaction: ButtonInteraction, client: BotC
         collector.on('collect', async message => {
 
             memberInfoOnDatabase = await prisma.member.findUnique({
-                where: {
-                    id_guildId: {
-                        guildId: interaction.guild?.id as string,
-                        id: interaction.user.id
-                    }
-                }
+                where: { id: interaction.user.id }
             });
 
             if (!memberInfoOnDatabase) {
                 await prisma.member.create({
                     data: {
-                        guildId: interaction.guild?.id as string,
                         id: interaction.user.id,
                         try: 1,
                         timestampTry: getVerificationTimeoutCount()
@@ -108,12 +92,7 @@ export async function manageCaptcha(interaction: ButtonInteraction, client: BotC
 
             if (message.content.toUpperCase() !== captchaCode) {
                 await prisma.member.update({
-                    where: {
-                        id_guildId: {
-                            guildId: interaction.guild?.id as string,
-                            id: interaction.user.id
-                        }
-                    },
+                    where: { id: interaction.user.id },
                     data: { try: memberInfoOnDatabase?.try as number + 1, timestampTry: getVerificationTimeoutCount() }
                 });
 
@@ -132,12 +111,7 @@ export async function manageCaptcha(interaction: ButtonInteraction, client: BotC
                 await member?.roles.add(pingPartitionRole);
 
                 await prisma.member.update({
-                    where: {
-                        id_guildId: {
-                            guildId: interaction.guild?.id as string,
-                            id: interaction.user.id
-                        }
-                    },
+                    where: { id: interaction.user.id },
                     data: { try: 0, timestampTry: getVerificationTimeoutCount() }
                 });
 
