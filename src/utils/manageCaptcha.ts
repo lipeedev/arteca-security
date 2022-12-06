@@ -44,7 +44,15 @@ export async function manageCaptcha(interaction: ButtonInteraction, client: BotC
             });
         }
 
-        const roleVerification = interaction.guild?.roles.cache.get(guild.verifiedRoleId) as Role;
+        const roleVerification = interaction.guild?.roles.cache.get(guild.verifiedRoleId as string) as Role;
+        const mainDivRole = interaction.guild?.roles.cache.get(guild.mainPartitionRoleId as string) as Role;
+        const statusPartitionRole = interaction.guild?.roles.cache.get(guild.statusPartitionRoleId as string) as Role;
+        const comunityPartitionRole = interaction.guild?.roles.cache.get(guild.comunityPartitionRoleId as string) as Role;
+        const profilePartitionRole = interaction.guild?.roles.cache.get(guild.profilePartitionRoleId as string) as Role;
+        const permissionPartitionRole = interaction.guild?.roles.cache.get(guild.permissionPartitionRoleId as string) as Role;
+        const rolesPartitionRole = interaction.guild?.roles.cache.get(guild.rolesPartitionRoleId as string) as Role;
+        const pingPartitionRole = interaction.guild?.roles.cache.get(guild.pingPartitionRoleId as string) as Role;
+
         const member = await interaction.guild?.members.fetch(interaction.user.id);
 
         if (member?.roles.cache.has(roleVerification.id)) {
@@ -52,7 +60,7 @@ export async function manageCaptcha(interaction: ButtonInteraction, client: BotC
             return;
         }
 
-        const captchaCode = randomBytes(6).toString('hex').toUpperCase();
+        const captchaCode = randomBytes(5).toString('hex').toUpperCase();
 
         const captchaSendedEmbed = new EmbedBuilder()
             .setAuthor({ name: client.user?.username as string, iconURL: client.user?.displayAvatarURL({ forceStatic: false }) })
@@ -87,50 +95,58 @@ export async function manageCaptcha(interaction: ButtonInteraction, client: BotC
                 }
             });
 
+            if (!memberInfoOnDatabase) {
+                await prisma.member.create({
+                    data: {
+                        guildId: interaction.guild?.id as string,
+                        id: interaction.user.id,
+                        try: 1,
+                        timestampTry: getVerificationTimeoutCount()
+                    }
+                });
+            }
+
             if (message.content.toUpperCase() !== captchaCode) {
-                if (!memberInfoOnDatabase) {
-                    await prisma.member.create({
-                        data: {
+                await prisma.member.update({
+                    where: {
+                        id_guildId: {
                             guildId: interaction.guild?.id as string,
-                            id: interaction.user.id,
-                            try: 1,
-                            timestampTry: getVerificationTimeoutCount()
+                            id: interaction.user.id
                         }
-                    });
-                } else {
-                    await prisma.member.update({
-                        where: {
-                            id_guildId: {
-                                guildId: interaction.guild?.id as string,
-                                id: interaction.user.id
-                            }
-                        },
-                        data: { try: memberInfoOnDatabase.try + 1, timestampTry: getVerificationTimeoutCount() }
-                    });
-                }
+                    },
+                    data: { try: memberInfoOnDatabase?.try as number + 1, timestampTry: getVerificationTimeoutCount() }
+                });
 
                 await message.reply({ content: constants.wrongCaptchaReceived });
                 return;
             }
 
-            const roleAdded = await member?.roles.add(roleVerification).catch(() => null);
+            try {
+                await member?.roles.add(roleVerification);
+                await member?.roles.add(mainDivRole);
+                await member?.roles.add(statusPartitionRole);
+                await member?.roles.add(comunityPartitionRole);
+                await member?.roles.add(profilePartitionRole);
+                await member?.roles.add(permissionPartitionRole);
+                await member?.roles.add(rolesPartitionRole);
+                await member?.roles.add(pingPartitionRole);
 
-            await prisma.member.update({
-                where: {
-                    id_guildId: {
-                        guildId: interaction.guild?.id as string,
-                        id: interaction.user.id
-                    }
-                },
-                data: { try: 0, timestampTry: getVerificationTimeoutCount() }
-            }).catch(() => null);
+                await prisma.member.update({
+                    where: {
+                        id_guildId: {
+                            guildId: interaction.guild?.id as string,
+                            id: interaction.user.id
+                        }
+                    },
+                    data: { try: 0, timestampTry: getVerificationTimeoutCount() }
+                });
 
-            if (!roleAdded) {
+                await message.channel.send(constants.successCaptchaResolve);
+
+            } catch (err) {
                 await message.reply({ content: constants.addRoleError });
-                return;
+                client.logger.showError((err as Error).message, (err as Error).message);
             }
-
-            await message.channel.send(constants.successCaptchaResolve);
         });
     }
 }

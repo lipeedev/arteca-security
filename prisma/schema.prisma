@@ -11,9 +11,16 @@ datasource db {
 }
 
 model Guild {
-  id               String @id @unique
-  captchaChannelId String @unique
-  verifiedRoleId   String @unique
+  id                        String  @id @unique
+  captchaChannelId          String? @unique
+  verifiedRoleId            String? @unique
+  mainPartitionRoleId       String? @unique
+  statusPartitionRoleId     String? @unique
+  comunityPartitionRoleId   String? @unique
+  profilePartitionRoleId    String? @unique
+  permissionPartitionRoleId String? @unique
+  rolesPartitionRoleId      String? @unique
+  pingPartitionRoleId       String? @unique
 
   @@map("guilds")
 }

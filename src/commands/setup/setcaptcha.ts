@@ -1,8 +1,9 @@
 import { Command, OptionsExecute } from '../../structures';
 import type { BotClient } from '../../Client';
-import { ApplicationCommandType, ApplicationCommandOptionType, EmbedBuilder, TextChannel, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } from 'discord.js';
+import { ApplicationCommandType, EmbedBuilder, TextChannel, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } from 'discord.js';
 import { constants } from '../../utils/constants';
 import { prisma } from '../../lib/prisma';
+import { captchaCommandOptions } from '../../utils/captchaCommandOptions';
 
 
 export default class SetCaptchaCommand extends Command {
@@ -14,27 +15,21 @@ export default class SetCaptchaCommand extends Command {
             dmPermission: false,
             defaultMemberPermissions: PermissionFlagsBits.Administrator,
 
-            options: [{
-                name: 'channel',
-                required: true,
-                description: 'channel to verifiation.',
-                type: ApplicationCommandOptionType.Channel
-            },
-
-            {
-                name: 'role',
-                required: true,
-                description: 'role to verification.',
-                type: ApplicationCommandOptionType.Role
-            }]
+            options: captchaCommandOptions
         });
     }
 
     async execute({ interaction }: OptionsExecute) {
-        const channelTargetOption = interaction.options.getChannel('channel');
+        const channelTargetOption = interaction.options.getChannel('channel') as TextChannel;
         const roleTargetOption = interaction.options.getRole('role');
-
-        if (!channelTargetOption || !roleTargetOption) return;
+        const mainDivTargetOption = interaction.options.getRole('main-div');
+        const statusDivTargetOption = interaction.options.getRole('status-div');
+        const comunityDivTargetOption = interaction.options.getRole('comunity-div');
+        const profileDivTargetOption = interaction.options.getRole('profile-div');
+        const permissionDivTargetOption = interaction.options.getRole('permission-div');
+        const roleDivTargetOption = interaction.options.getRole('role-div');
+        const pingDivTargetOption = interaction.options.getRole('ping-div');
+ 
 
         const successEmbed = new EmbedBuilder()
             .setAuthor({ name: this.client.user?.username as string, iconURL: this.client.user?.displayAvatarURL({ forceStatic: false }) })
@@ -52,9 +47,6 @@ export default class SetCaptchaCommand extends Command {
 
         const rowComponent = new ActionRowBuilder<ButtonBuilder>().addComponents(verificationButton);
 
-        const channelTargetVerification = interaction.guild?.channels.cache.get(channelTargetOption.id) as TextChannel;
-        const roleTargetVerification = interaction.guild?.roles.cache.get(roleTargetOption.id);
-
         const guild = await prisma.guild.findUnique({
             where: { id: interaction.guild?.id }
         });
@@ -67,12 +59,19 @@ export default class SetCaptchaCommand extends Command {
         await prisma.guild.create({
             data: {
                 id: interaction.guild?.id as string,
-                captchaChannelId: channelTargetVerification.id,
-                verifiedRoleId: roleTargetVerification?.id as string
+                captchaChannelId: channelTargetOption?.id,
+                verifiedRoleId: roleTargetOption?.id,
+                mainPartitionRoleId: mainDivTargetOption?.id,
+                comunityPartitionRoleId: comunityDivTargetOption?.id,
+                permissionPartitionRoleId: permissionDivTargetOption?.id,
+                pingPartitionRoleId: pingDivTargetOption?.id,
+                rolesPartitionRoleId: roleDivTargetOption?.id,
+                profilePartitionRoleId: profileDivTargetOption?.id,
+                statusPartitionRoleId: statusDivTargetOption?.id
             }
         });
 
-        channelTargetVerification.send({ embeds: [verificationEmbed], components: [rowComponent] });
+        channelTargetOption.send({ embeds: [verificationEmbed], components: [rowComponent] });
         await interaction.reply({ embeds: [successEmbed], ephemeral: true });
 
     }
