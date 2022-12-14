@@ -45,7 +45,7 @@ export class BotClient extends Client {
         await super.login(process.env.BOT_TOKEN);
         await this.events.loadEvents();
         await this.commands.loadCommands(this);
-        if (process.env.ENV === 'dev') await this.commands.registerLocalCommands();
+        if (process.env.ENV === 'dev') await this.commands.registerCommands();
 
         process.on('uncaughtException', (err: Error) => this.logger.showError(err.message, err.stack as string));
         process.on('unhandledRejection', (err: Error) => this.logger.showError(err.message, err.stack as string));
